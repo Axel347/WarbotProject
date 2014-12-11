@@ -21,7 +21,10 @@ public class WarRocketLauncherBrainController extends WarRocketLauncherAbstractB
 	private String toReturn = null;
 	boolean iAbleToFireBase = false;
 	private int compteur_tick = 0;
+	private int compteur_tick_rocket = 0;
 	
+	private static final int ANGLE_EVITER = 60;
+	private static final int COMPTEUR_EVITER = 20;
 	private static final int COMPTEUR_CERCLE = 10;
 	private static final int DISTANCE_BASE = 10;
 	private static final int ANGLE_CERCLE = 20;
@@ -34,27 +37,79 @@ public class WarRocketLauncherBrainController extends WarRocketLauncherAbstractB
 		
 		private TaskRocketLauncher defense = new TaskRocketLauncher(this){
 			void exec(WarRocketLauncherBrainController bc){
-				compteur_tick++;
-				if(compteur_tick == COMPTEUR_CERCLE){
-				compteur_tick = 0;	
-				getBrain().setHeading(getBrain().getHeading() - ANGLE_CERCLE);
-				}
-				garderDistanceBase();
-				toReturn = WarRocketLauncher.ACTION_MOVE;
 				
+				getBrain().setDebugStringColor(Color.BLUE);
+				getBrain().setDebugString("defense");
+				
+				WarMessage m = getFormatedMessageAboutEnemyTankToKill();
+				
+				if((getBrain().getPerceptsEnemiesByType(WarAgentType.WarRocketLauncher)).size() > 0 || m != null){
+					ctask = attaquer;
+				}
+				else
+				{
+					compteur_tick++;
+					if(compteur_tick == COMPTEUR_CERCLE){
+						compteur_tick = 0;	
+						getBrain().setHeading(getBrain().getHeading() - ANGLE_CERCLE);
+					}
+					garderDistanceBase();
+					
+					if (getBrain().isBlocked())
+						getBrain().setRandomHeading();
+					toReturn = WarRocketLauncher.ACTION_MOVE;
+				}
 			} 
 		};
 		
 		private TaskRocketLauncher attaquer = new TaskRocketLauncher(this){
 			void exec(WarRocketLauncherBrainController bc){
-				attackRocketLaunchers();
 				
-				if((getBrain().getPerceptsEnemiesByType(WarAgentType.WarRocketLauncher)).size() == 0){
-					ctask = defense;
+				getBrain().setDebugStringColor(Color.RED);
+				getBrain().setDebugString("attaquer");
+				
+				ArrayList<WarPercept> rocket = getBrain().getPerceptsEnemiesByType(WarAgentType.WarRocket);
+				
+				if (rocket.size() > 0)
+				{
+					ctask = eviter;
+				}
+				else
+				{
+					attackRocketLaunchers(WarAgentType.WarRocketLauncher);
+					attackRocketLaunchers(WarAgentType.WarExplorer);
+					
+					WarMessage m = getFormatedMessageAboutEnemyTankToKill();
+					
+					if((getBrain().getPerceptsEnemiesByType(WarAgentType.WarRocketLauncher)).size() == 0 && m == null){
+						ctask = defense;
+					}
 				}
 			} 
 		};
 		
+		private TaskRocketLauncher eviter = new TaskRocketLauncher(this){
+			void exec(WarRocketLauncherBrainController bc){
+				
+				getBrain().setDebugStringColor(Color.GREEN);
+				getBrain().setDebugString("eviter");
+				
+				if (compteur_tick_rocket == 0)
+				{	
+					getBrain().setHeading(getBrain().getHeading() + ANGLE_EVITER);
+					compteur_tick_rocket = COMPTEUR_EVITER;
+				}
+				
+				compteur_tick_rocket--;
+				
+				if (compteur_tick_rocket == 0)
+				{
+					ctask = attaquer;
+				}
+				
+				toReturn = WarRocketLauncher.ACTION_MOVE;
+			}
+		};
 		
 		//FSM *****************************
 	
@@ -75,12 +130,9 @@ public class WarRocketLauncherBrainController extends WarRocketLauncherAbstractB
 		
 		this.messages = getBrain().getMessages();
 		
-		if((getBrain().getPerceptsEnemiesByType(WarAgentType.WarRocketLauncher)).size() > 0){
-			ctask = attaquer;
-		}
-		
-		
+	
 		ctask.exec(this);
+		
 		
 		/*handleMessages();
 		
@@ -92,6 +144,7 @@ public class WarRocketLauncherBrainController extends WarRocketLauncherAbstractB
 		
 		wiggle();*/
 		
+		System.out.println(toReturn + " " + getBrain().getDebugString());
 		if(toReturn == null){
 			if (getBrain().isBlocked())
 				getBrain().setRandomHeading();
@@ -146,7 +199,7 @@ public class WarRocketLauncherBrainController extends WarRocketLauncherAbstractB
 		}		
 	}
 	
-	private void attackRocketLaunchers() {
+	private void attackRocketLaunchers(WarAgentType w) {
 		if(toReturn != null)
 			return;
 		
@@ -158,7 +211,7 @@ public class WarRocketLauncherBrainController extends WarRocketLauncherAbstractB
 		getBrain().setDebugStringColor(Color.blue);
 		getBrain().setDebugString("Attack launchers");
 		
-		ArrayList<WarPercept> percept = getBrain().getPerceptsEnemiesByType(WarAgentType.WarRocketLauncher);
+		ArrayList<WarPercept> percept = getBrain().getPerceptsEnemiesByType(w);
 		
 		// Je un agentType dans le percept
 		if(percept != null && percept.size() > 0){
@@ -168,15 +221,20 @@ public class WarRocketLauncherBrainController extends WarRocketLauncherAbstractB
 			
 			if(getBrain().isReloaded()){
 				
-				getBrain().setHeading(percept.get(0).getAngle());
-				toReturn = WarRocketLauncher.ACTION_FIRE;
+				int indMinLife = perceptMinimumVie(percept);
+				getBrain().setHeading(percept.get(indMinLife).getAngle());
+				if (!detectionTirAllie(percept.get(indMinLife)))
+				{
+					toReturn = WarRocketLauncher.ACTION_FIRE;
+				}
+				
 			}else{
 				
 				//si je suis pas trop pres de l'enemy je m'approche
 				
-				if(percept.get(0).getDistance() > WarRocket.EXPLOSION_RADIUS + 1)
-					toReturn = WarRocketLauncher.ACTION_MOVE;
-				else
+//				if(percept.get(0).getDistance() > WarRocket.EXPLOSION_RADIUS + 1)
+//					toReturn = WarRocketLauncher.ACTION_MOVE;
+//				else
 					toReturn = WarRocketLauncher.ACTION_IDLE;
 			}
 		}else{
@@ -184,9 +242,20 @@ public class WarRocketLauncherBrainController extends WarRocketLauncherAbstractB
 			
 			WarMessage m = getFormatedMessageAboutEnemyTankToKill();
 			if(m != null){
+				
 				CoordPolar p = getBrain().getIndirectPositionOfAgentWithMessage(m);
 				getBrain().setHeading(p.getAngle());
-				toReturn = WarRocketLauncher.ACTION_MOVE;
+				if (p.getDistance() <= WarRocketLauncher.DISTANCE_OF_VIEW)
+				{
+					System.out.println(p.getDistance() + "  " + WarRocketLauncher.DISTANCE_OF_VIEW);
+					toReturn = WarRocketLauncher.ACTION_IDLE;
+				}
+				else
+				{
+					System.out.println(p.getDistance() + "  " + WarRocketLauncher.DISTANCE_OF_VIEW);
+					toReturn = WarRocketLauncher.ACTION_MOVE;
+				}
+				
 			}
 		}		
 	}
@@ -244,4 +313,45 @@ public class WarRocketLauncherBrainController extends WarRocketLauncherAbstractB
 			}
 		}
 	}
+	
+	private int perceptMinimumVie(ArrayList<WarPercept> e)
+	{
+		int life = e.get(0).getHealth();
+		int j=0;
+		
+		for (int i=1; i<e.size(); i++)
+		{
+			if (life > e.get(i).getHealth())
+			{
+				life = e.get(i).getHealth();
+				j=i;
+			}
+		}
+		
+		return j;
+	}
+	
+	private boolean detectionTirAllie(WarPercept wp)
+	{
+		ArrayList<WarPercept> e = getBrain().getPerceptsAllies();
+		
+		if (e.size() > 0)
+		{
+			for (int i=0; i<e.size(); i++)
+			{
+				if (e.get(i).getDistance() < wp.getDistance())
+				{
+					return true;
+				}
+			}
+			
+			return false;
+		}
+		else
+		{
+			return false;
+		}
+			
+	}
+	
 }

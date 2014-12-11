@@ -5,6 +5,7 @@ import java.util.Random;
 
 import edu.turtlekit3.warbot.agents.agents.WarBase;
 import edu.turtlekit3.warbot.agents.enums.WarAgentType;
+import edu.turtlekit3.warbot.agents.percepts.WarPercept;
 import edu.turtlekit3.warbot.agents.resources.WarFood;
 import edu.turtlekit3.warbot.brains.braincontrollers.WarBaseAbstractBrainController;
 import edu.turtlekit3.warbot.communications.WarMessage;
@@ -34,6 +35,7 @@ public class WarBaseBrainController extends WarBaseAbstractBrainController {
 		
 		getBrain().broadcastMessageToAll(Constants.here, "");
 
+		baseAttaque();
 		
 		attribuerRole();
 		
@@ -106,6 +108,38 @@ public class WarBaseBrainController extends WarBaseAbstractBrainController {
 				}
 			}
 		}
+	}
+	
+	private void baseAttaque()
+	{
+		ArrayList<WarPercept> ennemy = getBrain().getPerceptsEnemies();
+		
+		if (ennemy != null && ennemy.size() > 0)
+		{
+			int indMinimumVie = perceptMinimumVie(ennemy);
+			String[] posEnnemy = new String[2];
+			posEnnemy[0] = "" + ennemy.get(indMinimumVie).getDistance();
+			posEnnemy[1] = "" + ennemy.get(indMinimumVie).getAngle();
+			getBrain().broadcastMessageToAgentType(WarAgentType.WarRocketLauncher, Constants.enemyTankHere, posEnnemy);
+		}
+		
+	}
+	
+	private int perceptMinimumVie(ArrayList<WarPercept> e)
+	{
+		int life = e.get(0).getHealth();
+		int j=0;
+		
+		for (int i=1; i<e.size(); i++)
+		{
+			if (life > e.get(i).getHealth())
+			{
+				life = e.get(i).getHealth();
+				j=i;
+			}
+		}
+		
+		return j;
 	}
 	
 }
