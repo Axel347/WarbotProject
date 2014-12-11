@@ -14,9 +14,7 @@ A faire :
 		-> attaque de la base ennemie : 
 			-> strategie d'attaque en groupe de rocket launcher (si on a le temps ?)
 
-		-> technique de production des unités (attention à l'énergie de la base) :
-			-> 10 rockets launchers puis 2 ingé (voir combien de tourelles un ingé peut créer) puis au moins 1 kamikaze
-
+		
 		Appel d'offre :
 		-> bloquer les points clés (point de nourriture) 
 			-> soit par un tank ou bien soit par une tourelle (à voir)
@@ -41,4 +39,9 @@ Deja fait (OK) ou possiblement à faire (???) :
 		-> cueilleur (OK et ???)
 			-> recruteur d'ingénieur ou de rockets launchers pour bloquer nourriture à l'ennemie (???)
 		-> espion (OK mais à verifier des qu'il meurt si il est remplacé)
+
+	-> technique de production des unités (attention à l'énergie de la base) :
+			-> 10 rockets launchers puis 2 ingé (voir combien de tourelles un ingé peut créer) puis au moins 1 kamikaze
+			-> Si moins de 5 rockets launchers vivants, alors on en crée des nouveaux en priorité
+	
 		

@@ -15,5 +15,7 @@ public class Constants {
 	public static String espion = "espion";
 	
 	public static String espionMort = "espionMort";
+	
+	public static String rocketLauncherAlive = "rocketLauncherAlive";
 
 }

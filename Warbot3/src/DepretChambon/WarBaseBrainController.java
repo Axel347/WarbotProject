@@ -20,8 +20,15 @@ public class WarBaseBrainController extends WarBaseAbstractBrainController {
 	private int cptCreation = 0;
 	
 	private static final int DELAI_ESPION = 3;
+	private static final int CREATION_TANKS = 5;
+	private static final int CREATION_INGE = 7;
+	private static final int CREATION_KAM = 8;
+	private static final int NOMBRE_MIN_ROCKETLAUNCHERS = 5;
 	
 	private static final int MIN_HEATH_TO_CREATE = (int) (WarBase.MAX_HEALTH * 0.8);
+	
+	
+	ArrayList<WarMessage> msgs;
 	
 	public WarBaseBrainController() {
 		super();
@@ -32,7 +39,7 @@ public class WarBaseBrainController extends WarBaseAbstractBrainController {
 	public String action() {
 		
 		toReturn = null;
-		
+		msgs = getBrain().getMessages();
 		getBrain().broadcastMessageToAll(Constants.here, "");
 
 		baseAttaque();
@@ -43,7 +50,8 @@ public class WarBaseBrainController extends WarBaseAbstractBrainController {
 		
 		healMySelf();
 		
-		createUnit(WarAgentType.WarEngineer);
+		determinerCreation();
+		
 		
 		if(toReturn == null)
 			toReturn = WarBase.ACTION_IDLE;
@@ -76,7 +84,7 @@ public class WarBaseBrainController extends WarBaseAbstractBrainController {
 	}
 
 	private void handleMessages() {
-		ArrayList<WarMessage> msgs = getBrain().getMessages();
+		
 		for(WarMessage msg : msgs) {
 			if (msg.getMessage().equals(Constants.whereAreYou)) {
 				getBrain().sendMessage(msg.getSenderID(), Constants.here, "");
@@ -142,4 +150,37 @@ public class WarBaseBrainController extends WarBaseAbstractBrainController {
 		return j;
 	}
 	
+	private void determinerCreation(){
+		
+		//Comptage du nombre de rocket launchers
+		int cptTank = 0;
+		for(WarMessage msg : msgs) {
+			if (msg.getMessage().equals(Constants.rocketLauncherAlive)) {
+				cptTank++;
+			}
+			
+		}
+		
+		
+		//SI ON A PAS ASSEZ DE ROCKETLAUNCHERS, ON EN CREE DE NOUVEAUX
+		if(cptTank < NOMBRE_MIN_ROCKETLAUNCHERS){
+			createUnit(WarAgentType.WarRocketLauncher);
+		}
+		else{
+			//SINON ON CREE D'AUTRES UNITES SELON COMBIEN ON EN A DEJA CREE
+			if(cptCreation < CREATION_TANKS){
+				createUnit(WarAgentType.WarRocketLauncher);
+			}
+			else if(cptCreation < CREATION_INGE){
+				createUnit(WarAgentType.WarEngineer);
+			}
+			else if(cptCreation < CREATION_KAM){
+				createUnit(WarAgentType.WarEngineer);
+			}
+			else if(cptCreation > CREATION_KAM){
+				createUnit(WarAgentType.WarRocketLauncher);
+			}
+		}	
+		
+	}
 }

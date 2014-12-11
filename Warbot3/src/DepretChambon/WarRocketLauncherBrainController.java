@@ -126,6 +126,11 @@ public class WarRocketLauncherBrainController extends WarRocketLauncherAbstractB
 		// Develop behaviour here
 		
 		toReturn = null;
+		
+		//Chaque tour on envoi un message a la base pour dire qu'on est toujours vivant
+		getBrain().broadcastMessageToAgentType(WarAgentType.WarBase, Constants.rocketLauncherAlive, "");
+		
+		
 		getBrain().broadcastMessageToAgentType(WarAgentType.WarBase, Constants.whereAreYou, "");
 		
 		this.messages = getBrain().getMessages();
