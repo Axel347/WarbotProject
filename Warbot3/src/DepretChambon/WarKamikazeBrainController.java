@@ -1,9 +1,20 @@
 package DepretChambon;
 
+import java.util.ArrayList;
+
 import edu.turtlekit3.warbot.agents.agents.WarKamikaze;
+import edu.turtlekit3.warbot.agents.agents.WarRocketLauncher;
+import edu.turtlekit3.warbot.agents.enums.WarAgentType;
+import edu.turtlekit3.warbot.agents.percepts.WarPercept;
 import edu.turtlekit3.warbot.brains.braincontrollers.WarKamikazeAbstractBrainController;
+import edu.turtlekit3.warbot.communications.WarMessage;
+import edu.turtlekit3.warbot.tools.CoordPolar;
 
 public class WarKamikazeBrainController extends WarKamikazeAbstractBrainController {
+	
+	private String toReturn = null;
+	private ArrayList<WarMessage> messages;
+	private double baseToAttack = 0;
 	
 	public WarKamikazeBrainController() {
 		super();
@@ -11,10 +22,49 @@ public class WarKamikazeBrainController extends WarKamikazeAbstractBrainControll
 
 	@Override
 	public String action() {
-		// Develop behaviour here
 		
-		if (getBrain().isBlocked())
-			getBrain().setRandomHeading();
-		return WarKamikaze.ACTION_MOVE;
+		messages = getBrain().getMessages();
+		toReturn = null;
+		// Develop behaviour here
+		attaquerBase();
+		
+		if(toReturn == null){
+			if (getBrain().isBlocked())
+				getBrain().setRandomHeading();
+			toReturn = WarRocketLauncher.ACTION_MOVE;
+		}
+		
+		return toReturn;
 	}
+	
+	
+	
+	public void attaquerBase(){
+		if(!getBrain().isReloaded() && !getBrain().isReloading()){
+			toReturn =  WarRocketLauncher.ACTION_RELOAD;
+			return;
+		}
+		
+		ArrayList<WarPercept> percept = getBrain().getPerceptsEnemiesByType(WarAgentType.WarBase);
+		if(percept != null && percept.size() > 0 && percept.get(0).getDistance() < WarKamikaze.HITBOX_RADIUS){
+			getBrain().setHeading(percept.get(0).getAngle());
+			toReturn = WarKamikaze.ACTION_FIRE;
+		}
+		
+
+		for(WarMessage msg : messages) {
+			if(msg.getMessage().equals(Constants.enemyBaseHere)){
+				CoordPolar p = getBrain().getIndirectPositionOfAgentWithMessage(msg);
+				baseToAttack = p.getAngle();
+			}
+				
+		}
+		
+		if(baseToAttack != 0){
+			getBrain().setHeading(baseToAttack);
+			System.out.println(baseToAttack);
+		}
+		
+	}
+	
 }

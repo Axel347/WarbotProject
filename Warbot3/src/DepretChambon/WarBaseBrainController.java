@@ -9,6 +9,7 @@ import edu.turtlekit3.warbot.agents.percepts.WarPercept;
 import edu.turtlekit3.warbot.agents.resources.WarFood;
 import edu.turtlekit3.warbot.brains.braincontrollers.WarBaseAbstractBrainController;
 import edu.turtlekit3.warbot.communications.WarMessage;
+import edu.turtlekit3.warbot.tools.CoordPolar;
 
 public class WarBaseBrainController extends WarBaseAbstractBrainController {
 
@@ -18,6 +19,7 @@ public class WarBaseBrainController extends WarBaseAbstractBrainController {
 	private String toReturn;
 	private int cptEspionMort = 0;
 	private int cptCreation = 0;
+	private CoordPolar coordonneeBase;
 	
 	private static final int DELAI_ESPION = 3;
 	private static final int CREATION_TANKS = 5;
@@ -89,15 +91,19 @@ public class WarBaseBrainController extends WarBaseAbstractBrainController {
 			if (msg.getMessage().equals(Constants.whereAreYou)) {
 				getBrain().sendMessage(msg.getSenderID(), Constants.here, "");
 			}
+			if(msg.getMessage().equals(Constants.enemyBaseHere)){
+				CoordPolar p = getBrain().getIndirectPositionOfAgentWithMessage(msg);
+				coordonneeBase = p;
+				getBrain().broadcastMessageToAgentType(WarAgentType.WarKamikaze, Constants.baseToAttack, msg.getContent()[0], msg.getContent()[1]);
+			}
 		}
 				
 	}
 	
 	private void attribuerRole(){
-		ArrayList <WarMessage> messages = getBrain().getMessages();
 		boolean espionMort = true;
 		
-		for(WarMessage m : messages){
+		for(WarMessage m : msgs){
 			if(m.getMessage().equals(Constants.espion)){
 				espionMort = false;
 				cptEspionMort = 0;
@@ -109,7 +115,7 @@ public class WarBaseBrainController extends WarBaseAbstractBrainController {
 		}
 		
 		if(cptEspionMort == DELAI_ESPION){
-			for(WarMessage m : messages){
+			for(WarMessage m : msgs){
 				if(m.getSenderType().equals(WarAgentType.WarExplorer)){
 					getBrain().reply(m, Constants.espionMort, "");
 					break;

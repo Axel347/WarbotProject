@@ -209,11 +209,11 @@ public class WarExplorerBrainController extends WarExplorerAbstractBrainControll
 	}
 	
 	private void detectEnemy(){
+		
+		for(WarPercept p : getBrain().getPerceptsEnemiesByType(WarAgentType.WarBase)){
+				getBrain().broadcastMessageToAgentType(WarAgentType.WarBase, Constants.enemyBaseHere ,String.valueOf(p.getDistance()), String.valueOf(p.getAngle()));
+				getBrain().broadcastMessageToAgentType(WarAgentType.WarKamikaze, Constants.enemyBaseHere ,String.valueOf(p.getDistance()), String.valueOf(p.getAngle()));
 
-		for(WarPercept p : getBrain().getPerceptsEnemies()){
-			if(p.getType().equals(WarAgentType.WarBase)){
-				getBrain().broadcastMessageToAgentType(WarAgentType.WarBase, Constants.enemyBaseHere, "");
-			}
 		}
 	}
 }

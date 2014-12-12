@@ -77,7 +77,7 @@ public class WarRocketLauncherBrainController extends WarRocketLauncherAbstractB
 				else
 				{
 					attackRocketLaunchers(WarAgentType.WarRocketLauncher);
-					attackRocketLaunchers(WarAgentType.WarExplorer);
+					//attackRocketLaunchers(WarAgentType.WarExplorer);
 					
 					WarMessage m = getFormatedMessageAboutEnemyTankToKill();
 					
@@ -149,7 +149,7 @@ public class WarRocketLauncherBrainController extends WarRocketLauncherAbstractB
 		
 		wiggle();*/
 		
-		System.out.println(toReturn + " " + getBrain().getDebugString());
+		//System.out.println(toReturn + " " + getBrain().getDebugString());
 		if(toReturn == null){
 			if (getBrain().isBlocked())
 				getBrain().setRandomHeading();
