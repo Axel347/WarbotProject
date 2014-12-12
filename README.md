@@ -20,7 +20,9 @@ A faire :
 			-> soit par un tank ou bien soit par une tourelle (à voir)
 
 
-	Implementer Ingénieurs, tourelles et kamikaze 
+	Espion tourne autour de la base enemie
+	
+	Implementer Ingénieurs, tourelles 
 
 Deja fait (OK) ou possiblement à faire (???) :
 	
@@ -44,4 +46,5 @@ Deja fait (OK) ou possiblement à faire (???) :
 			-> 10 rockets launchers puis 2 ingé (voir combien de tourelles un ingé peut créer) puis au moins 1 kamikaze
 			-> Si moins de 5 rockets launchers vivants, alors on en crée des nouveaux en priorité
 	
+	tactique Kamikazes (OK)
 		
