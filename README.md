@@ -20,7 +20,7 @@ A faire :
 			-> soit par un tank ou bien soit par une tourelle (à voir)
 
 
-	Espion tourne autour de la base enemie
+	
 	
 	Implementer Ingénieurs, tourelles 
 
@@ -47,4 +47,7 @@ Deja fait (OK) ou possiblement à faire (???) :
 			-> Si moins de 5 rockets launchers vivants, alors on en crée des nouveaux en priorité
 	
 	tactique Kamikazes (OK)
-		
+	
+	Espion tourne autour de la base enemie
+	
+	Explorateurs soignent les ingénieurs et les rocket launchers si la base à assez d'energie	
