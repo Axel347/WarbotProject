@@ -1,7 +1,9 @@
 package DepretChambon;
 
 import java.util.ArrayList;
-import java.util.Random;
+import java.util.HashMap;
+import java.util.Map.Entry;
+
 
 import edu.turtlekit3.warbot.agents.agents.WarBase;
 import edu.turtlekit3.warbot.agents.enums.WarAgentType;
@@ -20,20 +22,38 @@ public class WarBaseBrainController extends WarBaseAbstractBrainController {
 	private int cptEspionMort = 0;
 	private int cptCreation = 0;
 	private CoordPolar coordonneeBase;
+	private ArrayList<WarMessage> msgs;
+	private HashMap<Double,String> anglesTourelles;
+	private HashMap<Double,Integer> etatsTourelles;
+	
 	
 	private static final int DELAI_ESPION = 3;
 	private static final int CREATION_TANKS = 5;
 	private static final int CREATION_INGE = 7;
 	private static final int CREATION_KAM = 8;
 	private static final int NOMBRE_MIN_ROCKETLAUNCHERS = 5;
+	private static final int COMPTEUR_MAX_TURRET = 3;
 	
 	private static final int MIN_HEATH_TO_CREATE = (int) (WarBase.MAX_HEALTH * 0.8);
 	
 	
-	ArrayList<WarMessage> msgs;
+	
 	
 	public WarBaseBrainController() {
 		super();
+		
+		anglesTourelles = new HashMap<Double,String>();
+		etatsTourelles = new HashMap<Double,Integer>();
+		
+		for (int i=1; i<=360; i++)
+		{
+			if (i%45 == 0)
+			{
+				anglesTourelles.put(new Double(i), "");
+				etatsTourelles.put(new Double(i), new Integer(0));
+			}
+		}
+		
 	}
 
 
@@ -54,6 +74,14 @@ public class WarBaseBrainController extends WarBaseAbstractBrainController {
 		
 		determinerCreation();
 		
+		if (this.IngenieurEmpty())
+		{
+			this.appelOffreIngenieur();
+			
+			this.deroulementAppelOffreIngenieur();
+		}
+		
+		//this.etatTourelles();
 		
 		if(toReturn == null)
 			toReturn = WarBase.ACTION_IDLE;
@@ -189,4 +217,127 @@ public class WarBaseBrainController extends WarBaseAbstractBrainController {
 		}	
 		
 	}
+	
+	private void appelOffreIngenieur()
+	{
+		int cpt = 0;
+		
+		for(Entry<Double, String> entry : anglesTourelles.entrySet()) {
+		    Double cle = entry.getKey();
+		    String valeur = entry.getValue();
+		    
+		    if (cle.doubleValue() % 45 == 0 && cle.doubleValue() % 90 != 0)
+		    {
+		    	if (valeur.equals(""))
+		    	{
+		    		getBrain().broadcastMessageToAgentType(WarAgentType.WarEngineer, "AOT", String.valueOf(cle.doubleValue()));
+		    		cpt++;
+		    	}
+		    }
+		}
+		
+		if (cpt == 0)
+		{
+			for(Entry<Double, String> entry : anglesTourelles.entrySet()) {
+			    Double cle = entry.getKey();
+			    String valeur = entry.getValue();
+			    
+			    if (cle.doubleValue() % 90 == 0)
+			    {
+			    	if (valeur.equals(""))
+			    	{
+			    		getBrain().broadcastMessageToAgentType(WarAgentType.WarEngineer, "AOT", String.valueOf(cle.doubleValue()));
+			    	}
+			    }
+			}
+		}
+		
+		System.out.println(this.anglesTourelles.toString());
+	}
+	
+	private void deroulementAppelOffreIngenieur()
+	{
+		for (WarMessage m : this.msgs)
+		{
+			if (m.getSenderType().equals(WarAgentType.WarEngineer))
+			{
+				System.out.println("-- " +m.getContent()[0]);
+				if (m.getMessage().equals("OK"))
+				{
+					this.anglesTourelles.put(new Double(m.getContent()[0]), "En cours");
+				}
+				else if (m.getMessage().equals("IMPOSSIBLE"))
+				{
+					this.anglesTourelles.put(new Double(m.getContent()[0]), "Impossible");
+				}
+				else if (m.getMessage().equals("CONSTRUIT"))
+				{
+					this.anglesTourelles.put(new Double(m.getContent()[0]), "Construit");
+				}
+			}
+		}
+	}
+	
+	private void etatTourelles()
+	{
+		if (!this.turretEmpty())
+		{
+			for(Entry<Double, String> entry : anglesTourelles.entrySet()) {
+			    Double cle = entry.getKey();
+			    String valeur = entry.getValue();
+			    
+			    if (valeur.equals("Construit"))
+			    {
+			    	boolean estPresent = false;
+			    	for (WarMessage m : this.msgs)
+			    	{
+			    		if (m.getSenderType().equals(WarAgentType.WarTurret))
+			    		{
+			    			if (Math.round(m.getAngle()) == Math.round(cle.doubleValue()))
+			    			{
+			    				estPresent = true;
+			    				this.etatsTourelles.put(cle, Integer.valueOf(0));
+			    			}
+			    		}
+			    	}
+			    	
+			    	if (!estPresent)
+			    	{
+			    		this.etatsTourelles.put(cle, Integer.valueOf(this.etatsTourelles.get(cle).intValue() + 1));
+			    	}
+			    	
+			    	if (this.etatsTourelles.get(cle).intValue() == COMPTEUR_MAX_TURRET)
+			    	{
+			    		this.anglesTourelles.put(cle, "");
+			    		this.etatsTourelles.put(cle, Integer.valueOf(0));
+			    	}
+			    }
+			}
+		}
+		
+	}
+	
+	private boolean turretEmpty()
+	{
+		for(Entry<Double, String> entry : anglesTourelles.entrySet()) {
+			 String valeur = entry.getValue();
+			
+			 if (valeur.equals("Construit"))
+			 {
+				 return false;
+			 }
+		}
+		
+		return true;
+	}
+	
+	private boolean IngenieurEmpty()
+	{
+		ArrayList<WarPercept> inge = getBrain().getPerceptsAlliesByType(WarAgentType.WarEngineer);
+		
+
+		return (inge != null && inge.size() > 0);
+	}
+	
+	
 }
