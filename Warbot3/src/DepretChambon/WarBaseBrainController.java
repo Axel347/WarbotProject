@@ -339,5 +339,10 @@ public class WarBaseBrainController extends WarBaseAbstractBrainController {
 		return (inge != null && inge.size() > 0);
 	}
 	
+	private void enoughEnergy(){
+		if(getBrain().getHealth() > MIN_HEATH_TO_CREATE){
+			getBrain().broadcastMessageToAgentType(WarAgentType.WarExplorer, Constants.enoughEnergy, "");
+		}
+	}
 	
 }

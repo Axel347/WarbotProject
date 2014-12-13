@@ -28,6 +28,7 @@ public class WarRocketLauncherBrainController extends WarRocketLauncherAbstractB
 	private static final int COMPTEUR_CERCLE = 10;
 	private static final int DISTANCE_BASE = 10;
 	private static final int ANGLE_CERCLE = 20;
+	private static final int MIN_ENERGY = (int) (WarBase.MAX_HEALTH * 0.7);
 	
 
 	ArrayList<WarMessage> messages;
@@ -135,7 +136,7 @@ public class WarRocketLauncherBrainController extends WarRocketLauncherAbstractB
 		
 		this.messages = getBrain().getMessages();
 		
-	
+		checkEnergy();
 		ctask.exec(this);
 		
 		
@@ -359,4 +360,9 @@ public class WarRocketLauncherBrainController extends WarRocketLauncherAbstractB
 			
 	}
 	
+	private void checkEnergy(){
+		if(getBrain().getHealth() < MIN_ENERGY){
+			getBrain().broadcastMessageToAgentType(WarAgentType.WarExplorer, Constants.lowEnergy, "");
+		}
+	}
 }

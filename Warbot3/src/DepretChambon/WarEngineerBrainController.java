@@ -24,7 +24,7 @@ public class WarEngineerBrainController extends WarEngineerAbstractBrainControll
 	private static final int BORNE_MAX = 15;
 	private static final int BORNE_MIN_ANGLE = 120;
 	private static final int BORNE_MAX_ANGLE = 150;
-	
+	private static final int MIN_ENERGY = (int) (WarEngineer.MAX_HEALTH * 0.7);
 	
 	
 	//FSM *****************************
@@ -79,7 +79,7 @@ public class WarEngineerBrainController extends WarEngineerAbstractBrainControll
 	public String action() {
 		// Develop behaviour here
 		toReturn = null;
-		
+		checkEnergy();
 		messages = getBrain().getMessages();
 		
 		
@@ -232,5 +232,10 @@ public class WarEngineerBrainController extends WarEngineerAbstractBrainControll
 			}
 	}
 	
+	private void checkEnergy(){
+		if(getBrain().getHealth() < MIN_ENERGY){
+			getBrain().broadcastMessageToAgentType(WarAgentType.WarExplorer, Constants.lowEnergy, "");
+		}
+	}
 	
 }
