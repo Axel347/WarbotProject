@@ -7,6 +7,7 @@ import edu.turtlekit3.warbot.agents.ControllableWarAgent;
 import edu.turtlekit3.warbot.agents.MovableWarAgent;
 import edu.turtlekit3.warbot.agents.agents.WarBase;
 import edu.turtlekit3.warbot.agents.agents.WarExplorer;
+import edu.turtlekit3.warbot.agents.agents.WarRocketLauncher;
 import edu.turtlekit3.warbot.agents.enums.WarAgentType;
 import edu.turtlekit3.warbot.agents.percepts.WarPercept;
 import edu.turtlekit3.warbot.brains.braincontrollers.WarExplorerAbstractBrainController;
@@ -16,9 +17,18 @@ public class WarExplorerBrainController extends WarExplorerAbstractBrainControll
 	
 
 	private boolean imGiving = false;
+	private boolean nearEnemyBase = false;
 	private String toReturn;
 	private int role = -1; // Espion (1) ou ceuilleur (0)
 	ArrayList<WarMessage> messages = new ArrayList<WarMessage>();
+	private int compteur_tick = 0;
+	private int compteur_base = 0;
+	private boolean enough_energy_base = false;
+	
+	
+	private static final int COMPTEUR_CERCLE = 10;
+	private static final int ANGLE_CERCLE = 20;
+	private static final int MAX_DELAI_BASE_ENNEMIE = 100;
 	
 	
 	//FSM *************************
@@ -38,7 +48,12 @@ public class WarExplorerBrainController extends WarExplorerAbstractBrainControll
 		void exec(WarExplorerBrainController bc) {
 			getBrain().setDebugStringColor(Color.BLUE);
 			getBrain().setDebugString(role + "    goBackHome");
+			if(enough_energy_base){
+			helpOthers();
+			}
+			else{
 			returnFood();
+			}		
 		}
 	
 	};
@@ -60,7 +75,7 @@ public class WarExplorerBrainController extends WarExplorerAbstractBrainControll
 		
 		
 		if(role == 1){
-			getBrain().setDebugString("ESPION");
+			//getBrain().setDebugString("ESPION");
 			this.detectEnemy();
 			
 		}
@@ -209,11 +224,80 @@ public class WarExplorerBrainController extends WarExplorerAbstractBrainControll
 	}
 	
 	private void detectEnemy(){
-		
 		for(WarPercept p : getBrain().getPerceptsEnemiesByType(WarAgentType.WarBase)){
 				getBrain().broadcastMessageToAgentType(WarAgentType.WarBase, Constants.enemyBaseHere ,String.valueOf(p.getDistance()), String.valueOf(p.getAngle()));
 				getBrain().broadcastMessageToAgentType(WarAgentType.WarKamikaze, Constants.enemyBaseHere ,String.valueOf(p.getDistance()), String.valueOf(p.getAngle()));
+				nearEnemyBase = true;
+				compteur_base = 0;
+		}
+		if(nearEnemyBase){getBrain().setDebugString("OK");}
+		else{getBrain().setDebugString("NON");}
+		
+		if(nearEnemyBase){
+			enemyBaseDestroyed();
+			compteur_tick++;
+			if(compteur_tick == COMPTEUR_CERCLE){
+				compteur_tick = 0;	
+				getBrain().setHeading(getBrain().getHeading() - ANGLE_CERCLE);
+			}
+				enemyBaseDestroyed();
+				if (getBrain().isBlocked())
+					getBrain().setRandomHeading();
+				toReturn = WarExplorer.ACTION_MOVE;	
+		}
 
+	}
+	
+	private void enemyBaseDestroyed(){
+		compteur_base++;
+		if(compteur_base > MAX_DELAI_BASE_ENNEMIE){
+			nearEnemyBase = false;
+		}
+	}
+	
+	private void checkEnergyBase(){
+		for(WarMessage m : messages){
+			if(m.getMessage().equals(Constants.enoughEnergy)){
+				this.enough_energy_base = true;
+			}
+			else{
+				this.enough_energy_base = false;
+			}
+		}
+	}
+	
+	private void helpOthers(){
+		checkEnergyBase();
+		for (WarMessage m : messages){
+			//A EXECUTER UNIQUEMENT SI LA BASE A ASSEZ D'ENERGIE
+			if(m.getMessage().equals(Constants.lowEnergy)){
+				getBrain().setHeading(m.getAngle());
+				
+				ArrayList<WarPercept> engiPercepts = getBrain().getPerceptsAlliesByType(WarAgentType.WarBase);
+				WarPercept engi = engiPercepts.get(0);
+				ArrayList<WarPercept> rocketPercepts = getBrain().getPerceptsAlliesByType(WarAgentType.WarBase);
+				WarPercept rocket = rocketPercepts.get(0);
+				
+				if(engiPercepts.size() > 0){
+					if(engi.getDistance() > MovableWarAgent.MAX_DISTANCE_GIVE){
+						getBrain().setHeading(engi.getAngle());
+						toReturn = MovableWarAgent.ACTION_MOVE;
+					}else{
+						getBrain().setIdNextAgentToGive(engi.getID());
+						toReturn = MovableWarAgent.ACTION_GIVE;
+					}
+				}
+				else if(rocketPercepts.size()>0){
+					if(rocket.getDistance() > MovableWarAgent.MAX_DISTANCE_GIVE){
+						getBrain().setHeading(rocket.getAngle());
+						toReturn = MovableWarAgent.ACTION_MOVE;
+					}else{
+						getBrain().setIdNextAgentToGive(rocket.getID());
+						toReturn = MovableWarAgent.ACTION_GIVE;
+					}
+				}
+
+			}
 		}
 	}
 }
