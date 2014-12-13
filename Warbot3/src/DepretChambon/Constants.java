@@ -19,5 +19,8 @@ public class Constants {
 	public static String rocketLauncherAlive = "rocketLauncherAlive";
 	
 	public static String baseToAttack = "baseToAttack";
+	
+	public static String enoughEnergy = "enoughEnergy";
+	public static String lowEnergy = "lowEnergy";
 
 }
