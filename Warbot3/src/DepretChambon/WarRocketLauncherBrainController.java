@@ -28,7 +28,7 @@ public class WarRocketLauncherBrainController extends WarRocketLauncherAbstractB
 	private static final int COMPTEUR_CERCLE = 10;
 	private static final int DISTANCE_BASE = 10;
 	private static final int ANGLE_CERCLE = 20;
-	private static final int MIN_ENERGY = (int) (WarBase.MAX_HEALTH * 0.7);
+	private static final int MIN_ENERGY = (int) (WarRocketLauncher.MAX_HEALTH * 0.7);
 	
 
 	ArrayList<WarMessage> messages;
