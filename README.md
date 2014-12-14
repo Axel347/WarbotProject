@@ -45,4 +45,4 @@ Deja fait (OK) ou possiblement à faire (???) :
 	
 	Espion tourne autour de la base enemie
 	
-	Explorateurs soignent les ingénieurs et les rocket launchers si la base à assez d'energie	
+	Explorateurs soignent les ingénieurs et les rocket launchers si role = medecin	
