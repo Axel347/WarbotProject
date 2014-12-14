@@ -21,17 +21,19 @@ public class WarBaseBrainController extends WarBaseAbstractBrainController {
 	private String toReturn;
 	private int cptEspionMort = 0;
 	private int cptCreation = 0;
-	private CoordPolar coordonneeBase;
 	private ArrayList<WarMessage> msgs;
 	private HashMap<Double,String> anglesTourelles;
 	private HashMap<Double,Integer> etatsTourelles;
+	private CoordPolar coordonneeBase = null;
+	private int cptTank = 0;
+	int cptMedicMort = 0;
 	
 	
 	private static final int DELAI_ESPION = 3;
-	private static final int CREATION_TANKS = 5;
-	private static final int CREATION_INGE = 7;
+	private static final int CREATION_TANKS = 6;
+	private static final int CREATION_INGE = 1;
 	private static final int CREATION_KAM = 8;
-	private static final int NOMBRE_MIN_ROCKETLAUNCHERS = 5;
+	private static final int NOMBRE_MIN_ROCKETLAUNCHERS = 10;
 	private static final int COMPTEUR_MAX_TURRET = 3;
 	
 	private static final int MIN_HEATH_TO_CREATE = (int) (WarBase.MAX_HEALTH * 0.8);
@@ -107,6 +109,7 @@ public class WarBaseBrainController extends WarBaseAbstractBrainController {
 		if(getBrain().getHealth() > MIN_HEATH_TO_CREATE){
 				getBrain().setNextAgentToCreate(a1);
 				getBrain().setDebugString("Create: "+a1.name());
+				cptCreation++;
 			
 			toReturn = WarBase.ACTION_CREATE;
 		}
@@ -130,22 +133,38 @@ public class WarBaseBrainController extends WarBaseAbstractBrainController {
 	
 	private void attribuerRole(){
 		boolean espionMort = true;
+		boolean medicMort = true;
 		
 		for(WarMessage m : msgs){
 			if(m.getMessage().equals(Constants.espion)){
 				espionMort = false;
 				cptEspionMort = 0;
 			}
+			if(m.getMessage().equals(Constants.medic)){
+				medicMort = false;
+				cptMedicMort = 0;
+			}
 		}
 		
 		if(espionMort){
 			cptEspionMort++;
+		}
+		if(medicMort){
+			cptMedicMort++;
 		}
 		
 		if(cptEspionMort == DELAI_ESPION){
 			for(WarMessage m : msgs){
 				if(m.getSenderType().equals(WarAgentType.WarExplorer)){
 					getBrain().reply(m, Constants.espionMort, "");
+					break;
+				}
+			}
+		}
+		if(cptMedicMort == DELAI_ESPION){
+			for(WarMessage m : msgs){
+				if(m.getSenderType().equals(WarAgentType.WarExplorer)){
+					getBrain().reply(m, Constants.medicMort, "");
 					break;
 				}
 			}
@@ -187,7 +206,7 @@ public class WarBaseBrainController extends WarBaseAbstractBrainController {
 	private void determinerCreation(){
 		
 		//Comptage du nombre de rocket launchers
-		int cptTank = 0;
+		cptTank = 0;
 		for(WarMessage msg : msgs) {
 			if (msg.getMessage().equals(Constants.rocketLauncherAlive)) {
 				cptTank++;
@@ -195,26 +214,24 @@ public class WarBaseBrainController extends WarBaseAbstractBrainController {
 			
 		}
 		
-		
-		//SI ON A PAS ASSEZ DE ROCKETLAUNCHERS, ON EN CREE DE NOUVEAUX
+		/* SI ON A PAS ASSEZ DE ROCKETLAUNCHERS, ON EN CREE DE NOUVEAUX
 		if(cptTank < NOMBRE_MIN_ROCKETLAUNCHERS){
 			createUnit(WarAgentType.WarRocketLauncher);
 		}
-		else{
+		else{*/
 			//SINON ON CREE D'AUTRES UNITES SELON COMBIEN ON EN A DEJA CREE
-			if(cptCreation < CREATION_TANKS){
-				createUnit(WarAgentType.WarRocketLauncher);
-			}
-			else if(cptCreation < CREATION_INGE){
+			if(cptCreation < CREATION_INGE){
 				createUnit(WarAgentType.WarEngineer);
+			}
+			else if(cptCreation < CREATION_TANKS){
+				createUnit(WarAgentType.WarRocketLauncher);
 			}
 			else if(cptCreation < CREATION_KAM){
-				createUnit(WarAgentType.WarEngineer);
+				createUnit(WarAgentType.WarKamikaze);
 			}
-			else if(cptCreation > CREATION_KAM){
+			else{
 				createUnit(WarAgentType.WarRocketLauncher);
-			}
-		}	
+			}	
 		
 	}
 	

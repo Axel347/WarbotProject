@@ -23,7 +23,7 @@ public class WarExplorerBrainController extends WarExplorerAbstractBrainControll
 	ArrayList<WarMessage> messages = new ArrayList<WarMessage>();
 	private int compteur_tick = 0;
 	private int compteur_base = 0;
-	private boolean enough_energy_base = false;
+
 	
 	
 	private static final int COMPTEUR_CERCLE = 10;
@@ -48,15 +48,23 @@ public class WarExplorerBrainController extends WarExplorerAbstractBrainControll
 		void exec(WarExplorerBrainController bc) {
 			getBrain().setDebugStringColor(Color.BLUE);
 			getBrain().setDebugString(role + "    goBackHome");
-			if(enough_energy_base){
-			helpOthers();
-			}
-			else{
 			returnFood();
-			}		
 		}
 	
 	};
+	
+	private Task soigne = new Task(this){
+
+		@Override
+		void exec(WarExplorerBrainController bc) {
+			getBrain().setDebugStringColor(Color.BLUE);
+			getBrain().setDebugString(role + "    SOIGNE");
+			helpOthers();
+		}
+	
+	};
+	
+	
 	
 	//FSM **************************
 	
@@ -79,9 +87,10 @@ public class WarExplorerBrainController extends WarExplorerAbstractBrainControll
 			this.detectEnemy();
 			
 		}
-		else if(role == 0){
+		if(role == 0 || role == 2){
 			ctask.exec(this);
 		}
+
 		
 		
 		
@@ -121,7 +130,12 @@ public class WarExplorerBrainController extends WarExplorerAbstractBrainControll
 			if(foodAround != null && foodAround.size() > 0){
 				getBrain().broadcastMessageToAgentType(WarAgentType.WarExplorer, Constants.foodHere, "");
 			}
+			if(role ==2){
+			ctask = soigne;
+			}
+			else{
 			ctask = goBackHome;
+			}
 			return;
 		}
 		
@@ -184,17 +198,17 @@ public class WarExplorerBrainController extends WarExplorerAbstractBrainControll
 			//j'envoie un message aux bases pour savoir où elle sont..
 			getBrain().broadcastMessageToAgentType(WarAgentType.WarBase, Constants.whereAreYou, (String[]) null);
 			
-			toReturn = MovableWarAgent.ACTION_MOVE;
+			toReturn = WarExplorer.ACTION_MOVE;
 			
 		}else{//si je vois une base
 			WarPercept base = basePercepts.get(0);
 			
-			if(base.getDistance() > MovableWarAgent.MAX_DISTANCE_GIVE){
+			if(base.getDistance() > WarExplorer.MAX_DISTANCE_GIVE){
 				getBrain().setHeading(base.getAngle());
-				toReturn = MovableWarAgent.ACTION_MOVE;
+				toReturn = WarExplorer.ACTION_MOVE;
 			}else{
 				getBrain().setIdNextAgentToGive(base.getID());
-				toReturn = MovableWarAgent.ACTION_GIVE;
+				toReturn = WarExplorer.ACTION_GIVE;
 			}
 			
 		}
@@ -210,6 +224,9 @@ public class WarExplorerBrainController extends WarExplorerAbstractBrainControll
 			if(m.getMessage().equals(Constants.espionMort)){
 				this.role = 1;
 			}
+			else if(m.getMessage().equals(Constants.medicMort)){
+				this.role = 2;
+			}
 		}
 		
 		
@@ -218,6 +235,9 @@ public class WarExplorerBrainController extends WarExplorerAbstractBrainControll
 	private void prevenirBaseRole(){
 		if(role == 1){ //1 correspond à espion
 			getBrain().broadcastMessageToAgentType(WarAgentType.WarBase, Constants.espion, "");
+		}
+		if(role == 2){
+			getBrain().broadcastMessageToAgentType(WarAgentType.WarBase, Constants.medic, "");
 		}
 		
 		getBrain().broadcastMessageToAgentType(WarAgentType.WarBase, Constants.here, "");
@@ -255,45 +275,50 @@ public class WarExplorerBrainController extends WarExplorerAbstractBrainControll
 		}
 	}
 	
-	private void checkEnergyBase(){
-		for(WarMessage m : messages){
-			if(m.getMessage().equals(Constants.enoughEnergy)){
-				this.enough_energy_base = true;
-			}
-			else{
-				this.enough_energy_base = false;
-			}
-		}
-	}
+	
 	
 	private void helpOthers(){
-		checkEnergyBase();
+		
+		if(getBrain().isBagEmpty()){
+			getBrain().setHeading(getBrain().getHeading() + 180);
+			ctask = searchForFood;
+			return;
+		}
+		
 		for (WarMessage m : messages){
 			//A EXECUTER UNIQUEMENT SI LA BASE A ASSEZ D'ENERGIE
 			if(m.getMessage().equals(Constants.lowEnergy)){
+				System.out.println("ACTION POUR LE MEDIC");
 				getBrain().setHeading(m.getAngle());
+				toReturn = WarExplorer.ACTION_MOVE;
 				
+				WarPercept engi = null;
+				WarPercept rocket = null;
 				ArrayList<WarPercept> engiPercepts = getBrain().getPerceptsAlliesByType(WarAgentType.WarBase);
-				WarPercept engi = engiPercepts.get(0);
+				if(engiPercepts.size()>0){
+				engi = engiPercepts.get(0);
+				}
 				ArrayList<WarPercept> rocketPercepts = getBrain().getPerceptsAlliesByType(WarAgentType.WarBase);
-				WarPercept rocket = rocketPercepts.get(0);
+				if(rocketPercepts.size()>0){
+				rocket = rocketPercepts.get(0);
+				}
 				
 				if(engiPercepts.size() > 0){
-					if(engi.getDistance() > MovableWarAgent.MAX_DISTANCE_GIVE){
+					if(engi.getDistance() > WarExplorer.MAX_DISTANCE_GIVE){
 						getBrain().setHeading(engi.getAngle());
-						toReturn = MovableWarAgent.ACTION_MOVE;
+						toReturn = WarExplorer.ACTION_MOVE;
 					}else{
 						getBrain().setIdNextAgentToGive(engi.getID());
-						toReturn = MovableWarAgent.ACTION_GIVE;
+						toReturn = WarExplorer.ACTION_GIVE;
 					}
 				}
 				else if(rocketPercepts.size()>0){
-					if(rocket.getDistance() > MovableWarAgent.MAX_DISTANCE_GIVE){
+					if(rocket.getDistance() > WarExplorer.MAX_DISTANCE_GIVE){
 						getBrain().setHeading(rocket.getAngle());
-						toReturn = MovableWarAgent.ACTION_MOVE;
+						toReturn = WarExplorer.ACTION_MOVE;
 					}else{
 						getBrain().setIdNextAgentToGive(rocket.getID());
-						toReturn = MovableWarAgent.ACTION_GIVE;
+						toReturn = WarExplorer.ACTION_GIVE;
 					}
 				}
 

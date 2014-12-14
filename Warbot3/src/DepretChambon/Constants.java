@@ -13,8 +13,10 @@ public class Constants {
 	public static final String foodHere = "foodHere";
 	
 	public static String espion = "espion";
+	public static String medic = "medic";
 	
 	public static String espionMort = "espionMort";
+	public static String medicMort = "medicMort";
 	
 	public static String rocketLauncherAlive = "rocketLauncherAlive";
 	
