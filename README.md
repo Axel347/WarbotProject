@@ -14,11 +14,6 @@ A faire :
 		-> attaque de la base ennemie : 
 			-> strategie d'attaque en groupe de rocket launcher (si on a le temps ?)
 
-		
-		Appel d'offre :
-		-> bloquer les points clés (point de nourriture) 
-			-> soit par un tank ou bien soit par une tourelle (à voir)
-
 
 	
 	
