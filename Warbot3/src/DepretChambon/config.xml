@@ -4,7 +4,7 @@
 	<IconPath>myTeam.png</IconPath>
 	<SoundPath>myTeam.wav</SoundPath>
 	<Description>
-	    Write a description here !
+	   Equipe Warbot de Axel Depret et Théo Chambon
 	</Description>
 	<AgentsBrainControllers>
 		<WarExplorer>WarExplorerBrainController.class</WarExplorer>
