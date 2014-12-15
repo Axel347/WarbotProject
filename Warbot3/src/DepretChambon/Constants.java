@@ -31,5 +31,9 @@ public class Constants {
 	public static String etatConsTurretImpossible = "IMPOSSIBLE";
 	public static String turretIsBuilt = "ETAT?";
 	
+	public static String appelOffreAtqBase = "AOAB";
+	public static String acceptOffreAtqBase = "OKAB";
+	public static String offreAtqBaseConfirme = "GOAB";
+	
 
 }

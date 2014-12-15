@@ -27,7 +27,7 @@ public class WarExplorerBrainController extends WarExplorerAbstractBrainControll
 	
 	
 	private static final int COMPTEUR_CERCLE = 50;
-	private static final int MAX_DELAI_BASE_ENNEMIE = 500;
+	private static final int MAX_DELAI_BASE_ENNEMIE = 1000;
 	
 	
 	//FSM *************************

@@ -5,7 +5,9 @@ import java.util.HashMap;
 import java.util.Map.Entry;
 
 
+
 import edu.turtlekit3.warbot.agents.agents.WarBase;
+import edu.turtlekit3.warbot.agents.agents.WarRocketLauncher;
 import edu.turtlekit3.warbot.agents.enums.WarAgentType;
 import edu.turtlekit3.warbot.agents.percepts.WarPercept;
 import edu.turtlekit3.warbot.agents.resources.WarFood;
@@ -25,18 +27,30 @@ public class WarBaseBrainController extends WarBaseAbstractBrainController {
 	private HashMap<Double,String> anglesTourelles;
 	private HashMap<Double,Integer> etatsTourelles;
 	private ArrayList<WarMessage> offreInge;
+	private ArrayList<WarMessage> offreAtqBase;
 	
 	private CoordPolar coordonneeBase = null;
-	private int cptTank = 0;
+	private int cptTickNbTank = 0;
 	int cptMedicMort = 0;
+	private boolean groupeExistant = false;
+	private int cptAppelOffre = 0;
+	private int cptMortEnnemie = 0;
+	private int cptDetectionBaseEnnemy = 0;
+	private int cptTank = 0;
 	
 	
+	private static final int COMPTEUR_MORT_ENNEMIE_MAX = 3; 
 	private static final int DELAI_ESPION = 3;
 	private static final int CREATION_TANKS = 6;
 	private static final int CREATION_INGE = 1;
 	private static final int CREATION_KAM = 8;
 	private static final int COMPTEUR_MAX_TURRET = 3;
 	private static final int COMPTEUR_REBOOT = 15;
+	private static final int COMPTEUR_MAX_TANK = 10;
+	private static final int NB_TANK_ATQ = 5;
+	private static final int DELAI_DETECTION_EB = 300;
+	
+	
 	
 	private static final int MIN_HEATH_TO_CREATE = (int) (WarBase.MAX_HEALTH * 0.8);
 	
@@ -49,6 +63,7 @@ public class WarBaseBrainController extends WarBaseAbstractBrainController {
 		anglesTourelles = new HashMap<Double,String>();
 		etatsTourelles = new HashMap<Double,Integer>();
 		offreInge = new ArrayList<WarMessage>();
+		offreAtqBase = new ArrayList<WarMessage>();
 		
 		for (int i=1; i<=360; i++)
 		{
@@ -90,14 +105,60 @@ public class WarBaseBrainController extends WarBaseAbstractBrainController {
 		
 		//this.etatTourelles();
 		
-		for (WarMessage m : this.msgs)
-    	{
-    		if (m.getSenderType().equals(WarAgentType.WarTurret))
-    		{
-    			
-    			//System.out.println("----- " + m.getAngle() + " -----");
-    		}
-    	}
+		this.cptTank = nbTankAllieInBase();
+		
+		this.compterMort();
+		
+		WarMessage mess = getMessageAboutEnnemyBase();
+		
+		if (mess != null)
+		{
+			cptDetectionBaseEnnemy = 0;
+			
+			if (cptTickNbTank == 0)
+			{
+				if (this.offreAtqBase.size() < NB_TANK_ATQ)
+				{
+					appelOffreTankAtqBase();
+					recruterOffreAtqBase(NB_TANK_ATQ);
+				}
+			}
+			else
+			{
+				System.out.println(offreAtqBase.size() + " < " + (this.cptTank/2));
+				
+				if (!groupeExistant)
+				{
+					if (this.offreAtqBase.size() < (this.cptTank/2))
+					{
+						System.out.println(offreAtqBase.toString());
+						cptTickNbTank=0;
+						
+						appelOffreTankAtqBase();
+						recruterOffreAtqBase(this.cptTank/2);
+					}
+					else
+					{
+						recruterOffreAtqBase(this.cptTank/2);
+					}
+				}
+				
+			}
+			
+		}
+		else
+		{
+			cptDetectionBaseEnnemy++;
+			
+			if (cptDetectionBaseEnnemy >= DELAI_DETECTION_EB)
+			{
+				groupeExistant=false;
+				cptDetectionBaseEnnemy = 0;
+				this.offreAtqBase = new ArrayList<WarMessage>();
+			}
+		}
+		
+		
 		
 		if(toReturn == null)
 			toReturn = WarBase.ACTION_IDLE;
@@ -162,7 +223,6 @@ public class WarBaseBrainController extends WarBaseAbstractBrainController {
 		
 		if(espionMort){
 			cptEspionMort++;
-			System.out.println(cptEspionMort);
 		}
 		if(medicMort){
 			cptMedicMort++;
@@ -216,7 +276,7 @@ public class WarBaseBrainController extends WarBaseAbstractBrainController {
 	private void determinerCreation(){
 		
 		//Comptage du nombre de rocket launchers
-		cptTank = 0;
+		cptTank  = 0;
 		for(WarMessage msg : msgs) {
 			if (msg.getMessage().equals(Constants.rocketLauncherAlive)) {
 				cptTank++;
@@ -406,4 +466,88 @@ public class WarBaseBrainController extends WarBaseAbstractBrainController {
 		}
 	}
 	
+	private void appelOffreTankAtqBase()
+	{
+		ArrayList<WarPercept> tanks = getBrain().getPerceptsAlliesByType(WarAgentType.WarRocketLauncher);
+		
+		if (tanks.size() >= COMPTEUR_MAX_TANK && offreAtqBase.size() < NB_TANK_ATQ )
+		{
+			getBrain().broadcastMessageToAgentType(WarAgentType.WarRocketLauncher, Constants.appelOffreAtqBase, "");
+			cptTickNbTank=0;
+			
+		}
+		else if (cptMortEnnemie >= COMPTEUR_MORT_ENNEMIE_MAX && offreAtqBase.size() < (this.cptTank/2)) 
+		{
+			getBrain().broadcastMessageToAgentType(WarAgentType.WarRocketLauncher, Constants.appelOffreAtqBase, "");
+			cptTickNbTank++;
+		}
+	}
+	
+	private void recruterOffreAtqBase(int nbTankAtq)
+	{
+		for (WarMessage m : this.msgs)
+		{
+			if (m.getMessage().equals(Constants.acceptOffreAtqBase) && offreAtqBase.size() < nbTankAtq)
+			{
+				System.out.println(m.toString());
+				offreAtqBase.add(m);
+			}
+		}
+		
+		
+		if (offreAtqBase.size() == nbTankAtq)
+		{
+			System.out.println(offreAtqBase.size() + " == " + nbTankAtq);
+			for (WarMessage m : offreAtqBase)
+			{
+				getBrain().reply(m, Constants.offreAtqBaseConfirme,"");
+			}
+			
+			
+			groupeExistant = true;
+			offreAtqBase = new ArrayList<WarMessage>();
+		}
+	}
+	
+	private void compterMort()
+	{
+		System.out.println("**********" + cptMortEnnemie);
+		
+		if (cptMortEnnemie < COMPTEUR_MORT_ENNEMIE_MAX)
+		{
+			ArrayList<WarPercept> ennemie = getBrain().getPerceptsEnemiesByType(WarAgentType.WarRocketLauncher);
+			
+			System.out.println("....." + ennemie.size());
+			
+			for (WarPercept p : ennemie)
+			{
+				if (p.getHealth() <= ((int) WarRocketLauncher.MAX_HEALTH * 0.1) && cptMortEnnemie < COMPTEUR_MORT_ENNEMIE_MAX)
+				{
+					cptMortEnnemie++;
+				}
+			}
+		}
+		
+	}
+	
+	private WarMessage getMessageAboutEnnemyBase() {
+		
+		for(WarMessage msg : msgs) 
+		{
+			if(msg.getMessage().equals(Constants.enemyBaseHere))
+			{
+				return msg;
+			}
+		}
+		
+		return null;
+	}
+	
+	private int nbTankAllieInBase()
+	{
+		ArrayList<WarPercept> tanks = getBrain().getPerceptsAlliesByType(WarAgentType.WarRocketLauncher);
+		
+		return tanks.size();
+	}
+
 }

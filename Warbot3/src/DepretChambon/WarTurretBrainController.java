@@ -31,13 +31,8 @@ public class WarTurretBrainController extends WarTurretAbstractBrainController {
 		
 		if (toReturn == null)
 		{
-			WarMessage m = this.messageFromBase();
 			
-			if (m != null)
-			{
-				getBrain().setHeading(m.getAngle()+180);
-			}
-			
+			getBrain().setRandomHeading();
 			
 			toReturn = WarTurret.ACTION_IDLE;
 		}
@@ -48,7 +43,7 @@ public class WarTurretBrainController extends WarTurretAbstractBrainController {
 	private void attaquerEnnemy()
 	{
 		if(!getBrain().isReloaded() && !getBrain().isReloading()){
-			toReturn =  WarRocketLauncher.ACTION_RELOAD;
+			toReturn =  WarTurret.ACTION_RELOAD;
 			return;
 		}
 		
@@ -63,7 +58,7 @@ public class WarTurretBrainController extends WarTurretAbstractBrainController {
 				
 				getBrain().setHeading(ennemy.get(i).getAngle());
 				
-				toReturn = WarRocketLauncher.ACTION_FIRE;
+				toReturn = WarTurret.ACTION_FIRE;
 			}
 			else
 			{
@@ -75,11 +70,11 @@ public class WarTurretBrainController extends WarTurretAbstractBrainController {
 					
 					getBrain().setHeading(ennemy.get(i).getAngle());
 					
-					toReturn = WarRocketLauncher.ACTION_FIRE;
+					toReturn = WarTurret.ACTION_FIRE;
 				}
 				else
 				{
-					ennemy = getBrain().getPerceptsEnemiesByType(WarAgentType.WarEngineer);
+					ennemy = getBrain().getPerceptsEnemiesByType(WarAgentType.WarTurret);
 					
 					if (ennemy.size() > 0)
 					{
@@ -87,11 +82,11 @@ public class WarTurretBrainController extends WarTurretAbstractBrainController {
 						
 						getBrain().setHeading(ennemy.get(i).getAngle());
 						
-						toReturn = WarRocketLauncher.ACTION_FIRE;
+						toReturn = WarTurret.ACTION_FIRE;
 					}
 					else
 					{
-						ennemy = getBrain().getPerceptsEnemies();
+						ennemy = getBrain().getPerceptsEnemiesByType(WarAgentType.WarEngineer);
 						
 						if (ennemy.size() > 0)
 						{
@@ -99,7 +94,7 @@ public class WarTurretBrainController extends WarTurretAbstractBrainController {
 							
 							getBrain().setHeading(ennemy.get(i).getAngle());
 							
-							toReturn = WarRocketLauncher.ACTION_FIRE;
+							toReturn = WarTurret.ACTION_FIRE;
 						}
 							
 					}
