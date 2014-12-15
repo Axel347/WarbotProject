@@ -62,7 +62,7 @@ public class WarEngineerBrainController extends WarEngineerAbstractBrainControll
 			{
 				if (m != null)
 				{
-					System.out.println(etatTourelle);
+					//System.out.println(etatTourelle);
 					getBrain().reply(m, etatTourelle, String.valueOf(angleTourelleConstruct));
 					
 					etatTourelle = "";
@@ -220,7 +220,7 @@ public class WarEngineerBrainController extends WarEngineerAbstractBrainControll
 				if (Math.round(m.getDistance()) == WarBase.DISTANCE_OF_VIEW + BORNE_MAX && Math.round(pointInteret.getDistance()) == 0)
 				{
 					this.createUnit(WarAgentType.WarTurret);
-					System.out.println("## "+angleTourelleConstruct);
+					//System.out.println("## "+angleTourelleConstruct);
 				
 					//getBrain().broadcastMessageToAgentType(WarAgentType.WarBase, Constants.etatConsTurretConstruit, String.valueOf(angleTourelleConstruct));
 					etatTourelle = Constants.etatConsTurretConstruit;
@@ -258,7 +258,7 @@ public class WarEngineerBrainController extends WarEngineerAbstractBrainControll
 		{
 			if (m.getMessage().equals(Constants.turretIsBuilt))
 			{
-				System.out.println("  lllllllllll");
+				//System.out.println("  lllllllllll");
 				return m;
 			}
 		}

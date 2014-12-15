@@ -19,16 +19,15 @@ public class WarExplorerBrainController extends WarExplorerAbstractBrainControll
 	private boolean imGiving = false;
 	private boolean nearEnemyBase = false;
 	private String toReturn;
-	private int role = -1; // Espion (1) ou ceuilleur (0)
+	private int role = -1; // Espion (1) ou ceuilleur (0) ou Medecin(2)
 	ArrayList<WarMessage> messages = new ArrayList<WarMessage>();
 	private int compteur_tick = 0;
 	private int compteur_base = 0;
 
 	
 	
-	private static final int COMPTEUR_CERCLE = 10;
-	private static final int ANGLE_CERCLE = 20;
-	private static final int MAX_DELAI_BASE_ENNEMIE = 100;
+	private static final int COMPTEUR_CERCLE = 50;
+	private static final int MAX_DELAI_BASE_ENNEMIE = 500;
 	
 	
 	//FSM *************************
@@ -83,7 +82,7 @@ public class WarExplorerBrainController extends WarExplorerAbstractBrainControll
 		
 		
 		if(role == 1){
-			//getBrain().setDebugString("ESPION");
+			getBrain().setDebugString("ESPION");
 			this.detectEnemy();
 			
 		}
@@ -247,6 +246,7 @@ public class WarExplorerBrainController extends WarExplorerAbstractBrainControll
 		for(WarPercept p : getBrain().getPerceptsEnemiesByType(WarAgentType.WarBase)){
 				getBrain().broadcastMessageToAgentType(WarAgentType.WarBase, Constants.enemyBaseHere ,String.valueOf(p.getDistance()), String.valueOf(p.getAngle()));
 				getBrain().broadcastMessageToAgentType(WarAgentType.WarKamikaze, Constants.enemyBaseHere ,String.valueOf(p.getDistance()), String.valueOf(p.getAngle()));
+				getBrain().broadcastMessageToAgentType(WarAgentType.WarRocketLauncher, Constants.enemyBaseHere ,String.valueOf(p.getDistance()), String.valueOf(p.getAngle()));
 				nearEnemyBase = true;
 				compteur_base = 0;
 		}
@@ -258,7 +258,7 @@ public class WarExplorerBrainController extends WarExplorerAbstractBrainControll
 			compteur_tick++;
 			if(compteur_tick == COMPTEUR_CERCLE){
 				compteur_tick = 0;	
-				getBrain().setHeading(getBrain().getHeading() - ANGLE_CERCLE);
+				getBrain().setHeading(getBrain().getHeading() + 180);
 			}
 				enemyBaseDestroyed();
 				if (getBrain().isBlocked())
@@ -288,7 +288,7 @@ public class WarExplorerBrainController extends WarExplorerAbstractBrainControll
 		for (WarMessage m : messages){
 			//A EXECUTER UNIQUEMENT SI LA BASE A ASSEZ D'ENERGIE
 			if(m.getMessage().equals(Constants.lowEnergy)){
-				System.out.println("ACTION POUR LE MEDIC");
+				//System.out.println("ACTION POUR LE MEDIC");
 				getBrain().setHeading(m.getAngle());
 				toReturn = WarExplorer.ACTION_MOVE;
 				

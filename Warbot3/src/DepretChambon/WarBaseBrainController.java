@@ -35,8 +35,8 @@ public class WarBaseBrainController extends WarBaseAbstractBrainController {
 	private static final int CREATION_TANKS = 6;
 	private static final int CREATION_INGE = 1;
 	private static final int CREATION_KAM = 8;
-	private static final int NOMBRE_MIN_ROCKETLAUNCHERS = 10;
 	private static final int COMPTEUR_MAX_TURRET = 3;
+	private static final int COMPTEUR_REBOOT = 15;
 	
 	private static final int MIN_HEATH_TO_CREATE = (int) (WarBase.MAX_HEALTH * 0.8);
 	
@@ -95,7 +95,7 @@ public class WarBaseBrainController extends WarBaseAbstractBrainController {
     		if (m.getSenderType().equals(WarAgentType.WarTurret))
     		{
     			
-    			System.out.println("----- " + m.getAngle() + " -----");
+    			//System.out.println("----- " + m.getAngle() + " -----");
     		}
     	}
 		
@@ -162,23 +162,27 @@ public class WarBaseBrainController extends WarBaseAbstractBrainController {
 		
 		if(espionMort){
 			cptEspionMort++;
+			System.out.println(cptEspionMort);
 		}
 		if(medicMort){
 			cptMedicMort++;
 		}
 		
-		if(cptEspionMort == DELAI_ESPION){
+		if(cptEspionMort > DELAI_ESPION){
+			
 			for(WarMessage m : msgs){
 				if(m.getSenderType().equals(WarAgentType.WarExplorer)){
 					getBrain().reply(m, Constants.espionMort, "");
+					cptEspionMort = 0;
 					break;
 				}
 			}
 		}
-		if(cptMedicMort == DELAI_ESPION){
+		if(cptMedicMort > DELAI_ESPION){
 			for(WarMessage m : msgs){
 				if(m.getSenderType().equals(WarAgentType.WarExplorer)){
 					getBrain().reply(m, Constants.medicMort, "");
+					cptMedicMort = 0;
 					break;
 				}
 			}
@@ -237,7 +241,11 @@ public class WarBaseBrainController extends WarBaseAbstractBrainController {
 			}
 			else{
 				createUnit(WarAgentType.WarRocketLauncher);
-			}	
+			}
+			
+			if(cptCreation > COMPTEUR_REBOOT){
+				cptCreation = 0;
+			}
 		
 	}
 	
