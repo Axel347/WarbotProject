@@ -17,6 +17,7 @@ public class WarEngineerBrainController extends WarEngineerAbstractBrainControll
 	private String toReturn;
 	private ArrayList<WarMessage> messages;
 	private double angleTourelleConstruct;
+	private String etatTourelle;
 	
 	private static final int MIN_HEATH_TO_CREATE = (int) (WarEngineer.MAX_HEALTH * 0.5);
 	private static final int ANGLE_INTERET = 315;
@@ -54,11 +55,26 @@ public class WarEngineerBrainController extends WarEngineerAbstractBrainControll
 			getBrain().setDebugStringColor(Color.GREEN);
 			getBrain().setDebugString("constructionTourelle");
 			
-			e.constructionTourelle();
 			
-			if (e.angleTourelleConstruct == -1)
+			WarMessage m = getMessageAboutAOT();
+			
+			if (!etatTourelle.equals(""))
 			{
-				ctask = deplacement;
+				if (m != null)
+				{
+					System.out.println(etatTourelle);
+					getBrain().reply(m, etatTourelle, String.valueOf(angleTourelleConstruct));
+					
+					etatTourelle = "";
+					angleTourelleConstruct = -1;
+					
+					ctask = deplacement;
+					
+				}
+			}
+			else
+			{
+				constructionTourelle();
 			}
 			
 		}
@@ -70,7 +86,7 @@ public class WarEngineerBrainController extends WarEngineerAbstractBrainControll
 		super();
 		this.messages = new ArrayList<WarMessage>();
 		this.angleTourelleConstruct = -1;
-		
+		this.etatTourelle = "";
 		ctask = deplacement;
 		
 	}
@@ -79,9 +95,11 @@ public class WarEngineerBrainController extends WarEngineerAbstractBrainControll
 	public String action() {
 		// Develop behaviour here
 		toReturn = null;
-		checkEnergy();
 		messages = getBrain().getMessages();
 		
+		this.seSignaler();
+		
+		checkEnergy();
 		
 		ctask.exec(this);
 		
@@ -89,6 +107,7 @@ public class WarEngineerBrainController extends WarEngineerAbstractBrainControll
 		{
 			if (getBrain().isBlocked())
 				getBrain().setRandomHeading();
+			
 			toReturn = WarEngineer.ACTION_MOVE;
 		}
 		
@@ -100,8 +119,6 @@ public class WarEngineerBrainController extends WarEngineerAbstractBrainControll
 		
 		
 		if(getBrain().getHealth() > MIN_HEATH_TO_CREATE){
-			
-			System.out.println("@@@" + this.angleTourelleConstruct);
 			
 			getBrain().setNextAgentToCreate(a1);
 			getBrain().setDebugString("Create: "+a1.name());
@@ -169,11 +186,11 @@ public class WarEngineerBrainController extends WarEngineerAbstractBrainControll
 		{
 			if (m.getSenderType().equals(WarAgentType.WarBase))
 			{
-				if (m.getMessage().equals("AOT"))
+				if (m.getMessage().equals(Constants.appelOffreTurret))
 				{
 					if (this.angleTourelleConstruct == -1 && getBrain().getHealth() > MIN_HEATH_TO_CREATE)
 					{
-						getBrain().reply(m, "OK", m.getContent()[0]);
+						getBrain().reply(m, Constants.etatConsTurretEnCours, m.getContent()[0]);
 						this.angleTourelleConstruct = Double.valueOf(m.getContent()[0]);
 					}
 				}
@@ -184,6 +201,7 @@ public class WarEngineerBrainController extends WarEngineerAbstractBrainControll
 	private void constructionTourelle()
 	{
 			WarMessage m = this.messageFromBase();
+			
 			
 			if (m != null)
 			{
@@ -198,18 +216,14 @@ public class WarEngineerBrainController extends WarEngineerAbstractBrainControll
 						vecteurPositionAllie.getY() + vecteurPositionEnemie.getY());
 
 				CoordPolar pointInteret = positionfinal.toPolar();
-				
-				System.out.println("$$$ " +Math.round(pointInteret.getDistance()) );
-
-				
+								
 				if (Math.round(m.getDistance()) == WarBase.DISTANCE_OF_VIEW + BORNE_MAX && Math.round(pointInteret.getDistance()) == 0)
 				{
-					
 					this.createUnit(WarAgentType.WarTurret);
-					getBrain().broadcastMessageToAgentType(WarAgentType.WarBase, "CONSTRUIT", String.valueOf(angleTourelleConstruct));
-					
-					
-					this.angleTourelleConstruct = -1;
+					System.out.println("## "+angleTourelleConstruct);
+				
+					//getBrain().broadcastMessageToAgentType(WarAgentType.WarBase, Constants.etatConsTurretConstruit, String.valueOf(angleTourelleConstruct));
+					etatTourelle = Constants.etatConsTurretConstruit;
 					
 				}
 				else
@@ -217,8 +231,8 @@ public class WarEngineerBrainController extends WarEngineerAbstractBrainControll
 					
 					if (getBrain().isBlocked() && getBrain().getPercepts().size() == 0)
 					{
-						getBrain().broadcastMessageToAgentType(WarAgentType.WarBase, "IMPOSSIBLE", String.valueOf(angleTourelleConstruct));
-						this.angleTourelleConstruct = -1;
+						etatTourelle = Constants.etatConsTurretImpossible;
+						
 					}
 					else
 					{
@@ -236,6 +250,25 @@ public class WarEngineerBrainController extends WarEngineerAbstractBrainControll
 		if(getBrain().getHealth() < MIN_ENERGY){
 			getBrain().broadcastMessageToAgentType(WarAgentType.WarExplorer, Constants.lowEnergy, "");
 		}
+	}
+	
+	private WarMessage getMessageAboutAOT()
+	{
+		for (WarMessage m : this.messages)
+		{
+			if (m.getMessage().equals(Constants.turretIsBuilt))
+			{
+				System.out.println("  lllllllllll");
+				return m;
+			}
+		}
+		
+		return null;
+	}
+	
+	private void seSignaler()
+	{
+		getBrain().broadcastMessageToAgentType(WarAgentType.WarBase, Constants.here, "");
 	}
 	
 }

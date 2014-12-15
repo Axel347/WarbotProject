@@ -24,5 +24,12 @@ public class Constants {
 	
 	public static String enoughEnergy = "enoughEnergy";
 	public static String lowEnergy = "lowEnergy";
+	
+	public static String appelOffreTurret = "AOT";
+	public static String etatConsTurretConstruit = "CONSTRUIT";
+	public static String etatConsTurretEnCours = "EN COURS";
+	public static String etatConsTurretImpossible = "IMPOSSIBLE";
+	public static String turretIsBuilt = "ETAT?";
+	
 
 }

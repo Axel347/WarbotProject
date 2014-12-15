@@ -24,6 +24,8 @@ public class WarBaseBrainController extends WarBaseAbstractBrainController {
 	private ArrayList<WarMessage> msgs;
 	private HashMap<Double,String> anglesTourelles;
 	private HashMap<Double,Integer> etatsTourelles;
+	private ArrayList<WarMessage> offreInge;
+	
 	private CoordPolar coordonneeBase = null;
 	private int cptTank = 0;
 	int cptMedicMort = 0;
@@ -46,6 +48,7 @@ public class WarBaseBrainController extends WarBaseAbstractBrainController {
 		
 		anglesTourelles = new HashMap<Double,String>();
 		etatsTourelles = new HashMap<Double,Integer>();
+		offreInge = new ArrayList<WarMessage>();
 		
 		for (int i=1; i<=360; i++)
 		{
@@ -76,14 +79,25 @@ public class WarBaseBrainController extends WarBaseAbstractBrainController {
 		
 		determinerCreation();
 		
-		if (this.IngenieurEmpty())
+		if (!this.IngenieurEmpty())
 		{
 			this.appelOffreIngenieur();
 			
 			this.deroulementAppelOffreIngenieur();
+			
+			this.etatConstructionTurret();
 		}
 		
 		//this.etatTourelles();
+		
+		for (WarMessage m : this.msgs)
+    	{
+    		if (m.getSenderType().equals(WarAgentType.WarTurret))
+    		{
+    			
+    			System.out.println("----- " + m.getAngle() + " -----");
+    		}
+    	}
 		
 		if(toReturn == null)
 			toReturn = WarBase.ACTION_IDLE;
@@ -177,30 +191,22 @@ public class WarBaseBrainController extends WarBaseAbstractBrainController {
 		
 		if (ennemy != null && ennemy.size() > 0)
 		{
-			int indMinimumVie = perceptMinimumVie(ennemy);
-			String[] posEnnemy = new String[2];
-			posEnnemy[0] = "" + ennemy.get(indMinimumVie).getDistance();
-			posEnnemy[1] = "" + ennemy.get(indMinimumVie).getAngle();
-			getBrain().broadcastMessageToAgentType(WarAgentType.WarRocketLauncher, Constants.enemyTankHere, posEnnemy);
-		}
-		
-	}
-	
-	private int perceptMinimumVie(ArrayList<WarPercept> e)
-	{
-		int life = e.get(0).getHealth();
-		int j=0;
-		
-		for (int i=1; i<e.size(); i++)
-		{
-			if (life > e.get(i).getHealth())
+			for (int i=0; i<ennemy.size(); i++)
 			{
-				life = e.get(i).getHealth();
-				j=i;
+				
+				if (!ennemy.get(i).getType().equals(WarAgentType.WarExplorer))
+				{
+					String[] posEnnemy = new String[2];
+					posEnnemy[0] = "" + ennemy.get(i).getDistance();
+					posEnnemy[1] = "" + ennemy.get(i).getAngle();
+					getBrain().broadcastMessageToAgentType(WarAgentType.WarRocketLauncher, Constants.enemyTankHere, posEnnemy);
+				}
+				
+				
 			}
+			
 		}
 		
-		return j;
 	}
 	
 	private void determinerCreation(){
@@ -247,7 +253,7 @@ public class WarBaseBrainController extends WarBaseAbstractBrainController {
 		    {
 		    	if (valeur.equals(""))
 		    	{
-		    		getBrain().broadcastMessageToAgentType(WarAgentType.WarEngineer, "AOT", String.valueOf(cle.doubleValue()));
+		    		getBrain().broadcastMessageToAgentType(WarAgentType.WarEngineer, Constants.appelOffreTurret, String.valueOf(cle.doubleValue()));
 		    		cpt++;
 		    	}
 		    }
@@ -263,13 +269,13 @@ public class WarBaseBrainController extends WarBaseAbstractBrainController {
 			    {
 			    	if (valeur.equals(""))
 			    	{
-			    		getBrain().broadcastMessageToAgentType(WarAgentType.WarEngineer, "AOT", String.valueOf(cle.doubleValue()));
+			    		getBrain().broadcastMessageToAgentType(WarAgentType.WarEngineer, Constants.appelOffreTurret, String.valueOf(cle.doubleValue()));
 			    	}
 			    }
 			}
 		}
 		
-		System.out.println(this.anglesTourelles.toString());
+		//System.out.println(this.anglesTourelles.toString());
 	}
 	
 	private void deroulementAppelOffreIngenieur()
@@ -278,18 +284,34 @@ public class WarBaseBrainController extends WarBaseAbstractBrainController {
 		{
 			if (m.getSenderType().equals(WarAgentType.WarEngineer))
 			{
-				System.out.println("-- " +m.getContent()[0]);
-				if (m.getMessage().equals("OK"))
+				if (m.getMessage().equals(Constants.etatConsTurretEnCours))
 				{
-					this.anglesTourelles.put(new Double(m.getContent()[0]), "En cours");
+					offreInge.add(m);
+					this.anglesTourelles.put(new Double(m.getContent()[0]), Constants.etatConsTurretEnCours);
 				}
-				else if (m.getMessage().equals("IMPOSSIBLE"))
+				else if (m.getMessage().equals(Constants.etatConsTurretImpossible))
 				{
-					this.anglesTourelles.put(new Double(m.getContent()[0]), "Impossible");
+					for (int i = 0; i < offreInge.size(); i++)
+					{
+						if (offreInge.get(i).getSenderID() == m.getSenderID())
+						{
+							offreInge.remove(i);
+						}
+					}
+					
+					this.anglesTourelles.put(new Double(m.getContent()[0]), Constants.etatConsTurretImpossible);
 				}
-				else if (m.getMessage().equals("CONSTRUIT"))
+				else if (m.getMessage().equals(Constants.etatConsTurretConstruit))
 				{
-					this.anglesTourelles.put(new Double(m.getContent()[0]), "Construit");
+					for (int i = 0; i < offreInge.size(); i++)
+					{
+						if (offreInge.get(i).getSenderID() == m.getSenderID())
+						{
+							offreInge.remove(i);
+						}
+					}
+					
+					this.anglesTourelles.put(new Double(m.getContent()[0]), Constants.etatConsTurretConstruit);
 				}
 			}
 		}
@@ -303,7 +325,7 @@ public class WarBaseBrainController extends WarBaseAbstractBrainController {
 			    Double cle = entry.getKey();
 			    String valeur = entry.getValue();
 			    
-			    if (valeur.equals("Construit"))
+			    if (valeur.equals(Constants.etatConsTurretConstruit))
 			    {
 			    	boolean estPresent = false;
 			    	for (WarMessage m : this.msgs)
@@ -339,7 +361,7 @@ public class WarBaseBrainController extends WarBaseAbstractBrainController {
 		for(Entry<Double, String> entry : anglesTourelles.entrySet()) {
 			 String valeur = entry.getValue();
 			
-			 if (valeur.equals("Construit"))
+			 if (valeur.equals(Constants.etatConsTurretConstruit))
 			 {
 				 return false;
 			 }
@@ -350,10 +372,24 @@ public class WarBaseBrainController extends WarBaseAbstractBrainController {
 	
 	private boolean IngenieurEmpty()
 	{
-		ArrayList<WarPercept> inge = getBrain().getPerceptsAlliesByType(WarAgentType.WarEngineer);
 		
+		for (WarMessage m : this.msgs)
+		{
+			if (m.getSenderType().equals(WarAgentType.WarEngineer))
+			{
+				return false;
+			}
+		}
 
-		return (inge != null && inge.size() > 0);
+		return true;
+	}
+	
+	private void etatConstructionTurret()
+	{	
+		for (WarMessage m : this.offreInge)
+		{
+			getBrain().reply(m, Constants.turretIsBuilt, "");
+		}
 	}
 	
 	private void enoughEnergy(){
