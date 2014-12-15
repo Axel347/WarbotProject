@@ -25,14 +25,20 @@ public class WarExplorerBrainController extends WarExplorerAbstractBrainControll
 	private int compteur_base = 0;
 
 	
+<<<<<<< HEAD
 	
 	private static final int COMPTEUR_CERCLE = 50;
 	private static final int MAX_DELAI_BASE_ENNEMIE = 1000;
+=======
+	private static final int COMPTEUR_CERCLE = 50; 
+	private static final int MAX_DELAI_BASE_ENNEMIE = 500; //delai au bout du quel la base enemi est considérée comme morte
+>>>>>>> dd966f7c2e3f42f4b870b49d354e880e7d42a3a3
 	
 	
 	//FSM *************************
 	private Task ctask;
 	
+	//methode des ceuilleurs, ils se déplacent et récoltent de la nourriture
 	private Task searchForFood = new Task(this){
 		void exec(WarExplorerBrainController bc){
 			getBrain().setDebugStringColor(Color.RED);
@@ -41,6 +47,7 @@ public class WarExplorerBrainController extends WarExplorerAbstractBrainControll
 		} 
 	};
 	
+	//ramènent la nourriture
 	private Task goBackHome = new Task(this){
 
 		@Override
@@ -69,7 +76,7 @@ public class WarExplorerBrainController extends WarExplorerAbstractBrainControll
 	
 	public WarExplorerBrainController() {
 		super();
-		ctask = searchForFood;
+		ctask = searchForFood; // initialisation de la premiere ctask
 	}
 
 	@Override
@@ -80,12 +87,13 @@ public class WarExplorerBrainController extends WarExplorerAbstractBrainControll
 		prevenirBaseRole();
 		setRole();
 		
-		
+		//si on est un espion, on n'utilise pas la FSM car un seul état
 		if(role == 1){
 			getBrain().setDebugString("ESPION");
 			this.detectEnemy();
 			
 		}
+		//sinon les ceuilleurs et médecins utilisent la FSM
 		if(role == 0 || role == 2){
 			ctask.exec(this);
 		}
@@ -144,8 +152,6 @@ public class WarExplorerBrainController extends WarExplorerAbstractBrainControll
 		if(getBrain().isBlocked())
 			getBrain().setRandomHeading();
 		
-		//getBrain().setDebugStringColor(Color.BLACK);
-		//getBrain().setDebugString("Searching food");
 		
 		ArrayList<WarPercept> foodPercepts = getBrain().getPerceptsResources();
 		
@@ -214,6 +220,7 @@ public class WarExplorerBrainController extends WarExplorerAbstractBrainControll
 		
 	}
 	
+	//Mets le role par défaut à ceuilleur, puis crée un médecin ou un espion s'il n'y en a plus de vivant
 	private void setRole(){
 		if(role == -1){
 			role = 0;
@@ -231,6 +238,7 @@ public class WarExplorerBrainController extends WarExplorerAbstractBrainControll
 		
 	}
 	
+	//à chaque tour, on préviens la base qu'on est encore vivant, pour pas qu'elle ne crée d'espion supplémentaire
 	private void prevenirBaseRole(){
 		if(role == 1){ //1 correspond à espion
 			getBrain().broadcastMessageToAgentType(WarAgentType.WarBase, Constants.espion, "");
@@ -242,6 +250,7 @@ public class WarExplorerBrainController extends WarExplorerAbstractBrainControll
 		getBrain().broadcastMessageToAgentType(WarAgentType.WarBase, Constants.here, "");
 	}
 	
+	//Role de l'espion, dès qu'il passe près d'une base enemie, il reste autour et envoie en permanence des messages avec les coordonnées de la base
 	private void detectEnemy(){
 		for(WarPercept p : getBrain().getPerceptsEnemiesByType(WarAgentType.WarBase)){
 				getBrain().broadcastMessageToAgentType(WarAgentType.WarBase, Constants.enemyBaseHere ,String.valueOf(p.getDistance()), String.valueOf(p.getAngle()));
@@ -253,6 +262,7 @@ public class WarExplorerBrainController extends WarExplorerAbstractBrainControll
 		if(nearEnemyBase){getBrain().setDebugString("OK");}
 		else{getBrain().setDebugString("NON");}
 		
+		//on vérifie que la base autour de laquelle on tourne est toujours vivante, si elle est détruite, on pars vers d'autres bases enemies
 		if(nearEnemyBase){
 			enemyBaseDestroyed();
 			compteur_tick++;
@@ -268,6 +278,7 @@ public class WarExplorerBrainController extends WarExplorerAbstractBrainControll
 
 	}
 	
+	//Verification si la base aux alentours est toujours vivante
 	private void enemyBaseDestroyed(){
 		compteur_base++;
 		if(compteur_base > MAX_DELAI_BASE_ENNEMIE){
@@ -276,13 +287,14 @@ public class WarExplorerBrainController extends WarExplorerAbstractBrainControll
 	}
 	
 	
-	
+	//méthode pour le médecin, qui lorsqu'il est appelé par une unité blessée, va vers celle ci pour lui donner de l'energie
 	private void helpOthers(){
 		
 		if(getBrain().isBagEmpty()){
 			getBrain().setHeading(getBrain().getHeading() + 180);
 			ctask = searchForFood;
 			return;
+			//si notre sac est vide, on retourne chercher de la nourriture
 		}
 		
 		for (WarMessage m : messages){
@@ -303,6 +315,7 @@ public class WarExplorerBrainController extends WarExplorerAbstractBrainControll
 				rocket = rocketPercepts.get(0);
 				}
 				
+				//si on voit un ingénieur blessé on va le soigner
 				if(engiPercepts.size() > 0){
 					if(engi.getDistance() > WarExplorer.MAX_DISTANCE_GIVE){
 						getBrain().setHeading(engi.getAngle());
@@ -312,6 +325,7 @@ public class WarExplorerBrainController extends WarExplorerAbstractBrainControll
 						toReturn = WarExplorer.ACTION_GIVE;
 					}
 				}
+				//si on voit un lance roquette blessé on va le soigner
 				else if(rocketPercepts.size()>0){
 					if(rocket.getDistance() > WarExplorer.MAX_DISTANCE_GIVE){
 						getBrain().setHeading(rocket.getAngle());
