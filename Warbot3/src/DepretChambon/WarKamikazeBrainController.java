@@ -25,7 +25,6 @@ public class WarKamikazeBrainController extends WarKamikazeAbstractBrainControll
 		
 		messages = getBrain().getMessages();
 		toReturn = null;
-		// Develop behaviour here
 		attaquerBase();
 		
 		if(toReturn == null){
@@ -38,20 +37,18 @@ public class WarKamikazeBrainController extends WarKamikazeAbstractBrainControll
 	}
 	
 	
-	
+	//si on reçoit un message avec les coordonnées d'une base enemies, on va vers celle ci pour la détruire
 	public void attaquerBase(){
-		if(!getBrain().isReloaded() && !getBrain().isReloading()){
-			toReturn =  WarRocketLauncher.ACTION_RELOAD;
-			return;
-		}
 		
+		//si la base est assez proche, on attaque
 		ArrayList<WarPercept> percept = getBrain().getPerceptsEnemiesByType(WarAgentType.WarBase);
 		if(percept != null && percept.size() > 0 && percept.get(0).getDistance() < WarKamikaze.HITBOX_RADIUS){
 			getBrain().setHeading(percept.get(0).getAngle());
 			toReturn = WarKamikaze.ACTION_FIRE;
 		}
 		
-
+	
+		//sinon on vérifie nos messages pour voir si on a reçu les coordonnées de la base, si oui on se dirige vers elle
 		for(WarMessage msg : messages) {
 			if(msg.getMessage().equals(Constants.enemyBaseHere)){
 				CoordPolar p = getBrain().getIndirectPositionOfAgentWithMessage(msg);
